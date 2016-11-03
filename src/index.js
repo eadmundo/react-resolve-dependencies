@@ -1,16 +1,19 @@
 import React from 'react';
 
-export default function resolveDependencies(LoadingComponent) {
+export default function resolveDependencies(LoadingComponent, FailureComponent) {
 
   return function wrapWithResolver(WrappedComponent) {
 
-    class DependenciesResolver extends Component {
+    class DependenciesResolver extends React.Component {
 
       constructor(props, context) {
         super(props, context);
         this.state = {
-          dependenciesResolved: false
+          dependenciesResolved: false,
+          dependenciesFailed: false
         }
+        this.onDependencyResolution = this.onDependencyResolution.bind(this);
+        this.onDependencyFailure = this.onDependencyFailure.bind(this);
       }
 
       arrayPropertyIsValid(propertyName) {
@@ -21,20 +24,10 @@ export default function resolveDependencies(LoadingComponent) {
         return this.arrayPropertyIsValid('dependencies')
       }
 
-      get dependencies() {
+      get componentDependencies() {
         return WrappedComponent.dependencies.map(dependency => {
           return dependency()
         })
-      }
-
-      get dependencies() {
-        return this.hasDependencies
-          ? this.dependenciesAsPromises
-          : [Promise.resolve(true)]
-      }
-
-      getWrappedInstance() {
-        return this.refs.wrappedInstance
       }
 
       onDependencyResolution(results=[]) {
@@ -47,31 +40,41 @@ export default function resolveDependencies(LoadingComponent) {
       }
 
       onDependencyFailure(reason) {
+        this.setState({
+          dependenciesFailed: true
+        })
         if (WrappedComponent.onDependencyFailure) {
-          WrappedComponent.onDependencyFailure(results)
+          WrappedComponent.onDependencyFailure(reason)
         }
       }
 
+      get dependencies() {
+        return this.hasDependencies
+          ? this.componentDependencies
+          : [Promise.resolve('no component dependencies')]
+      }
+
       componentWillMount() {
-        if (this.hasDependencies) {
-          Promise.all(this.dependencies)
-            .then(results => this.onDependencyResolution(results))
-            .catch(reason => this.onDependencyFailure(reason))
-        } else {
-          this.onDependencyResolution()
-        }
+        Promise.all(this.dependencies)
+          .then(this.onDependencyResolution)
+          .catch(this.onDependencyFailure)
       }
 
       render() {
 
         if (!this.state.dependenciesResolved) {
           if (LoadingComponent) {
-            return <LoadingComponent />;
+            return <LoadingComponent {...this.props} />;
+          }
+          if (this.state.dependenciesFailed) {
+            if (FailureComponent) {
+              return <FailureComponent {...this.props} />;
+            }
           }
           return null;
         }
 
-        return <WrappedComponent {...this.props} ref='resolverWrappedInstance' />;
+        return <WrappedComponent {...this.props} />;
       }
 
     }

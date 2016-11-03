@@ -8,7 +8,7 @@
     "build": "rimraf lib && babel src --out-dir lib",
     "build:watch": "watch 'npm run build' ./src/",
     "prepublish": "npm run build",
-    "test": "mocha --compilers js:babel-core/register --recursive ./test"
+    "test": "mocha --compilers js:babel-core/register --recursive ./test --require ./test/setup.js"
   },
   "babel": {
     "presets": [
@@ -25,7 +25,10 @@
   },
   "homepage": "https://github.com/eadmundo/react-resolve-dependencies",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2"
+  },
   "devDependencies": {
     "babel-cli": "^6.6.5",
     "babel-eslint": "^5.0.0",
@@ -33,9 +36,13 @@
     "babel-preset-react": "^6.5.0",
     "babel-preset-stage-0": "^6.5.0",
     "chai": "^3.5.0",
+    "enzyme": "^2.5.1",
     "eslint": "~2.2.0",
+    "jsdom": "^9.8.3",
     "mocha": "^2.4.5",
+    "react-addons-test-utils": "^15.3.2",
     "rimraf": "^2.5.2",
+    "sinon": "^1.17.6",
     "watch": "^0.17.1"
   },
   "npmName": "react-resolve-dependencies",
