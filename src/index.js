@@ -63,7 +63,7 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
       render() {
 
         if (!this.state.dependenciesResolved) {
-          if (LoadingComponent) {
+          if (LoadingComponent && !this.state.dependenciesFailed) {
             return <LoadingComponent {...this.props} />;
           }
           if (this.state.dependenciesFailed) {
