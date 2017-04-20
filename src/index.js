@@ -4,28 +4,40 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
 
   return function wrapWithResolver(WrappedComponent) {
 
-    class DependenciesResolver extends React.Component {
+    class DependenciesResolver extends React.PureComponent {
+
+      static wrappedComponent = WrappedComponent
+
+      static defaultProps = {
+        serverRendered: false
+      }
 
       constructor(props, context) {
         super(props, context);
-        this.state = {
-          dependenciesResolved: false,
-          dependenciesFailed: false
+        if (!this.isOnServer) {
+          this.state = {
+            dependenciesResolved: this.props.serverRendered,
+            dependenciesFailed: false
+          }
         }
         this.onDependencyResolution = this.onDependencyResolution.bind(this);
         this.onDependencyFailure = this.onDependencyFailure.bind(this);
       }
 
-      arrayPropertyIsValid(propertyName) {
-        return Array.isArray(WrappedComponent[propertyName]) && WrappedComponent[propertyName].length;
+      static arrayPropertyIsValid(component, propertyName) {
+        return Array.isArray(component[propertyName]) && component[propertyName].length > 0;
       }
 
-      get hasDependencies() {
-        return this.arrayPropertyIsValid('dependencies')
+      get isOnServer() {
+        return !(typeof window !== 'undefined' && window.document);
       }
 
-      get componentDependencies() {
-        return WrappedComponent.dependencies.map(dependency => {
+      static componentHasDependencies(component) {
+        return this.arrayPropertyIsValid(component, 'dependencies')
+      }
+
+      static componentDependencies(component) {
+        return component.dependencies.map(dependency => {
           return dependency()
         })
       }
@@ -48,21 +60,23 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
         }
       }
 
-      get dependencies() {
-        return this.hasDependencies
-          ? this.componentDependencies
+      static dependencies(component) {
+        return this.componentHasDependencies(component)
+          ? this.componentDependencies(component)
           : [Promise.resolve('no component dependencies')]
       }
 
       componentWillMount() {
-        Promise.all(this.dependencies)
-          .then(this.onDependencyResolution)
-          .catch(this.onDependencyFailure)
+        if (!this.isOnServer && !this.props.serverRendered) {
+          Promise.all(this.constructor.dependencies(WrappedComponent))
+            .then(this.onDependencyResolution)
+            .catch(this.onDependencyFailure)
+        }
       }
 
       render() {
 
-        if (!this.state.dependenciesResolved) {
+        if (!this.isOnServer && !this.state.dependenciesResolved) {
           if (LoadingComponent && !this.state.dependenciesFailed) {
             return <LoadingComponent {...this.props} />;
           }

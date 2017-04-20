@@ -26,8 +26,8 @@
   "homepage": "https://github.com/eadmundo/react-resolve-dependencies",
   "license": "MIT",
   "dependencies": {
-    "react": "^15.3.2",
-    "react-dom": "^15.3.2"
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4"
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",
@@ -40,7 +40,7 @@
     "eslint": "~2.2.0",
     "jsdom": "^9.8.3",
     "mocha": "^2.4.5",
-    "react-addons-test-utils": "^15.3.2",
+    "react-addons-test-utils": "^15.5.1",
     "rimraf": "^2.5.2",
     "sinon": "^1.17.6",
     "watch": "^0.17.1"
