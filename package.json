@@ -27,6 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "react": "^15.5.4",
+    "react-display-name": "^0.2.0",
     "react-dom": "^15.5.4"
   },
   "devDependencies": {
