@@ -1,6 +1,7 @@
 import React from 'react';
 import getDisplayName from 'react-display-name';
 import { connect } from 'react-redux';
+import { push } from 'react-router-redux';
 
 export default function resolveDependencies(LoadingComponent, FailureComponent) {
 
@@ -28,21 +29,21 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
         this.onDependencyFailure = this.onDependencyFailure.bind(this);
       }
 
-      arrayPropertyIsValid(component, propertyName) {
-        return Array.isArray(component[propertyName]) && component[propertyName].length > 0;
-      }
-
       get isOnServer() {
         return !(typeof window !== 'undefined' && window.document);
       }
 
-      componentHasDependencies(component) {
+      static arrayPropertyIsValid(component, propertyName) {
+        return Array.isArray(component[propertyName]) && component[propertyName].length > 0;
+      }
+
+      static componentHasDependencies(component) {
         return this.arrayPropertyIsValid(component, 'dependencies')
       }
 
-      componentDependencies(component) {
+      static componentDependencies(component, dispatch) {
         return component.dependencies.map(dependency => {
-          return dependency(this.props.dispatch)
+          return dependency(dispatch)
         })
       }
 
@@ -53,33 +54,64 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
           })
         }
         if (WrappedComponent.onDependencyResolution) {
-          WrappedComponent.onDependencyResolution(results)
+          // WrappedComponent.onDependencyResolution(results)
         }
       }
 
       onDependencyFailure(reason) {
         if (!this.isOnServer) {
+          console.log('setting state')
           this.setState({
             dependenciesFailed: true
           })
         }
         if (WrappedComponent.onDependencyFailure) {
-          WrappedComponent.onDependencyFailure(this.props.dispatch, reason)
+          // WrappedComponent.onDependencyFailure(this.props.dispatch, reason)
         }
       }
 
-      dependencies(component) {
+      static resolve(component, dispatch, onResolution, onFailure) {
+        Promise.all(this.dependencies(component, dispatch))
+          .then(results => {
+            if (component.onDependencyFailure) {
+              // component.onDependencyFailure(dispatch, results)
+            }
+            return onResolution(results)
+          })
+          .catch(reason => {
+            if (component.onDependencyFailure) {
+              // component.onDependencyFailure(dispatch, reason)
+            }
+            return onFailure(reason)
+          })
+      }
+
+      static dependencies(component, dispatch) {
         return this.componentHasDependencies(component)
-          ? this.componentDependencies(component)
+          ? this.componentDependencies(component, dispatch)
           : [Promise.resolve('no component dependencies')]
       }
 
-      componentWillMount() {
-        if (this.isOnServer || !this.props.serverRendered) {
-          Promise.all(this.dependencies(WrappedComponent))
-            .then(this.onDependencyResolution)
-            .catch(this.onDependencyFailure)
+      componentDidMount() {
+        if (!this.props.serverRendered) {
+          this.constructor.resolve(WrappedComponent, this.props.dispatch, (results) => {
+            this.onDependencyResolution(results);
+            if (WrappedComponent.redirectOnSuccess) {
+              this.props.dispatch(push(WrappedComponent.redirectOnSuccess))
+            }
+          }, (reason) => {
+            this.onDependencyFailure(reason);
+            if (WrappedComponent.redirectOnFailure) {
+              this.props.dispatch(push(WrappedComponent.redirectOnFailure))
+            }
+          })
         }
+      }
+
+      static resolveDependencies(dispatch) {
+        Promise.all(this.dependencies(WrappedComponent))
+          .then(this.onDependencyResolution)
+          .catch(this.onDependencyFailure)
       }
 
       render() {
@@ -95,7 +127,6 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
           }
           return null;
         }
-
         return <WrappedComponent {...this.props} />;
       }
 
