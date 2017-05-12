@@ -41,9 +41,9 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
         return this.arrayPropertyIsValid(component, 'dependencies')
       }
 
-      static componentDependencies(component, dispatch) {
+      static componentDependencies(component, state, dispatch, resProps) {
         return component.dependencies.map(dependency => {
-          return dependency(dispatch)
+          return dependency(state, dispatch, resProps)
         })
       }
 
@@ -59,6 +59,7 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
       }
 
       onDependencyFailure(reason) {
+        console.log(reason)
         if (!this.isOnServer) {
           console.log('setting state')
           this.setState({
@@ -70,8 +71,8 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
         }
       }
 
-      static resolve(component, dispatch, onResolution, onFailure) {
-        Promise.all(this.dependencies(component, dispatch))
+      static resolve(component, state, dispatch, resProps, onResolution, onFailure) {
+        Promise.all(this.dependencies(component, state, dispatch, resProps))
           .then(results => {
             if (component.onDependencyFailure) {
               // component.onDependencyFailure(dispatch, results)
@@ -86,9 +87,9 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
           })
       }
 
-      static dependencies(component, dispatch) {
+      static dependencies(component, state, dispatch, resProps) {
         return this.componentHasDependencies(component)
-          ? this.componentDependencies(component, dispatch)
+          ? this.componentDependencies(component, state, dispatch, resProps)
           : [Promise.resolve('no component dependencies')]
       }
 
