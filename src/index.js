@@ -71,7 +71,7 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
         }
       }
 
-      static resolve(component, state, dispatch, resProps, onResolution, onFailure) {
+      static resolve(component, state, dispatch, resProps, onResolution, onFailure=()=>({})) {
         Promise.all(this.dependencies(component, state, dispatch, resProps))
           .then(results => {
             if (component.onDependencyFailure) {
