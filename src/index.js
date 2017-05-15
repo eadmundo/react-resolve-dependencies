@@ -41,9 +41,9 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
         return this.arrayPropertyIsValid(component, 'dependencies')
       }
 
-      static componentDependencies(component, dispatch) {
+      static componentDependencies(component, state, dispatch, resProps) {
         return component.dependencies.map(dependency => {
-          return dependency(dispatch)
+          return dependency(state, dispatch, resProps)
         })
       }
 
@@ -60,7 +60,6 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
 
       onDependencyFailure(reason) {
         if (!this.isOnServer) {
-          console.log('setting state')
           this.setState({
             dependenciesFailed: true
           })
@@ -70,8 +69,8 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
         }
       }
 
-      static resolve(component, dispatch, onResolution, onFailure) {
-        Promise.all(this.dependencies(component, dispatch))
+      static resolve(component, state, dispatch, resProps, onResolution, onFailure) {
+        Promise.all(this.dependencies(component, state, dispatch, resProps))
           .then(results => {
             if (component.onDependencyFailure) {
               // component.onDependencyFailure(dispatch, results)
@@ -86,15 +85,21 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
           })
       }
 
-      static dependencies(component, dispatch) {
+      static dependencies(component, state, dispatch, resProps) {
         return this.componentHasDependencies(component)
-          ? this.componentDependencies(component, dispatch)
+          ? this.componentDependencies(component, state, dispatch, resProps)
           : [Promise.resolve('no component dependencies')]
       }
 
       componentDidMount() {
+
+        const resProps = {
+          params: this.props.params,
+          query: this.props.location.query
+        }
+
         if (!this.props.serverRendered) {
-          this.constructor.resolve(WrappedComponent, this.props.dispatch, (results) => {
+          this.constructor.resolve(WrappedComponent, this.state, this.props.dispatch, resProps, (results) => {
             this.onDependencyResolution(results);
             if (WrappedComponent.redirectOnSuccess) {
               this.props.dispatch(push(WrappedComponent.redirectOnSuccess))
