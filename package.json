@@ -29,7 +29,9 @@
     "react": "^15.5.4",
     "react-display-name": "^0.2.0",
     "react-dom": "^15.5.4",
-    "react-router-redux": "^4.0.8"
+    "react-redux": "^5.0.4",
+    "react-router-redux": "^4.0.8",
+    "redux": "^3.6.0"
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",
