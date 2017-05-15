@@ -59,9 +59,7 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
       }
 
       onDependencyFailure(reason) {
-        console.log(reason)
         if (!this.isOnServer) {
-          console.log('setting state')
           this.setState({
             dependenciesFailed: true
           })
@@ -71,7 +69,7 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
         }
       }
 
-      static resolve(component, state, dispatch, resProps, onResolution, onFailure=()=>({})) {
+      static resolve(component, state, dispatch, resProps, onResolution, onFailure) {
         Promise.all(this.dependencies(component, state, dispatch, resProps))
           .then(results => {
             if (component.onDependencyFailure) {
@@ -94,8 +92,14 @@ export default function resolveDependencies(LoadingComponent, FailureComponent) 
       }
 
       componentDidMount() {
+
+        const resProps = {
+          params: this.props.params,
+          query: this.props.location.query
+        }
+
         if (!this.props.serverRendered) {
-          this.constructor.resolve(WrappedComponent, this.props.dispatch, (results) => {
+          this.constructor.resolve(WrappedComponent, this.state, this.props.dispatch, resProps, (results) => {
             this.onDependencyResolution(results);
             if (WrappedComponent.redirectOnSuccess) {
               this.props.dispatch(push(WrappedComponent.redirectOnSuccess))
