@@ -19,6 +19,7 @@
   "homepage": "https://github.com/eadmundo/react-resolve-dependencies",
   "license": "MIT",
   "dependencies": {
+    "hoist-non-react-statics": "^3.3.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6"
   },
@@ -26,6 +27,7 @@
     "@babel/cli": "^7.5.5",
     "@babel/core": "^7.5.5",
     "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/plugin-transform-runtime": "^7.5.5",
     "@babel/preset-env": "^7.5.5",
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.5.5",
