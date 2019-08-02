@@ -19,6 +19,7 @@
   "homepage": "https://github.com/eadmundo/react-resolve-dependencies",
   "license": "MIT",
   "dependencies": {
+    "@babel/runtime": "^7.5.5",
     "hoist-non-react-statics": "^3.3.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6"
@@ -36,6 +37,7 @@
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.14.0",
     "eslint": "^6.1.0",
+    "eslint-plugin-mocha": "^6.0.0",
     "jsdom": "^15.1.1",
     "mocha": "^6.2.0",
     "react-addons-test-utils": "^15.6.2",
