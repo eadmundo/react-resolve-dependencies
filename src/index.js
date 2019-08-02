@@ -42,19 +42,22 @@ export default function resolveDependencies(
       }
 
       useEffect(() => {
-        Promise.all(dependencies(WrappedComponent))
-          .then(onDependencyResolution)
-          .catch(onDependencyFailure);
+        let hasCancelled = false
+
+        if (!hasCancelled) {
+          Promise.all(dependencies(WrappedComponent))
+            .then(onDependencyResolution)
+            .catch(onDependencyFailure);
+        }
+        return () => hasCancelled = true;
       }, []);
 
       if (!dependenciesResolved) {
         if (LoadingComponent && !dependenciesFailed) {
           return <LoadingComponent {...props} />;
         }
-        if (dependenciesFailed) {
-          if (FailureComponent) {
-            return <FailureComponent {...props} reason={reason} />;
-          }
+        if (dependenciesFailed && FailureComponent) {
+          return <FailureComponent {...props} reason={reason} />;
         }
         return null;
       }
