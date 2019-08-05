@@ -6,40 +6,43 @@ export default function resolveDependencies(
   FailureComponent,
 ) {
   return function wrapWithResolver(WrappedComponent) {
-    const DependenciesResolver = (props) => {
+    const DependenciesResolver = props => {
       const [dependenciesResolved, setDependenciesResolved] = useState(false);
       const [dependenciesFailed, setDependenciesFailed] = useState(false);
       const [reason, setReason] = useState(null);
 
-      const componentHasDependencies = component => arrayPropertyIsValid(component, 'dependencies');
-
-      const componentDependencies = component => component.dependencies.map(
-        dependency => dependency(props),
-        this,
-      );
-
-      const dependencies = component => (componentHasDependencies(component)
-        ? componentDependencies(component)
-        : [Promise.resolve('no component dependencies')])
-
       const arrayPropertyIsValid = (component, propertyName) => {
-        return Array.isArray(component[propertyName]) && component[propertyName].length > 0;
-      }
+        return (
+          Array.isArray(component[propertyName]) &&
+          component[propertyName].length > 0
+        );
+      };
+
+      const componentHasDependencies = component =>
+        arrayPropertyIsValid(component, 'dependencies');
+
+      const componentDependencies = component =>
+        component.dependencies.map(dependency => dependency(props), this);
+
+      const dependencies = component =>
+        componentHasDependencies(component)
+          ? componentDependencies(component)
+          : [Promise.resolve('no component dependencies')];
 
       const onDependencyResolution = (results = []) => {
         setDependenciesResolved(true);
         if (WrappedComponent.onDependencyResolution) {
           WrappedComponent.onDependencyResolution(results);
         }
-      }
+      };
 
-      const onDependencyFailure = (reason) => {
-        setDependenciesFailed(true)
-        setReason(reason)
+      const onDependencyFailure = reason => {
+        setDependenciesFailed(true);
+        setReason(reason);
         if (WrappedComponent.onDependencyFailure) {
           WrappedComponent.onDependencyFailure(reason);
         }
-      }
+      };
 
       useEffect(() => {
         let hasCancelled = false;
@@ -49,7 +52,9 @@ export default function resolveDependencies(
             .then(onDependencyResolution)
             .catch(onDependencyFailure);
         }
-        return () => hasCancelled = true;
+        return function cleanup() {
+          hasCancelled = true;
+        };
       }, []);
 
       if (!dependenciesResolved) {
@@ -62,7 +67,7 @@ export default function resolveDependencies(
         return null;
       }
       return <WrappedComponent {...props} />;
-    }
+    };
 
     return hoistNonReactStatics(DependenciesResolver, WrappedComponent);
   };
