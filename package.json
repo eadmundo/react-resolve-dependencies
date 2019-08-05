@@ -38,6 +38,7 @@
     "enzyme-adapter-react-16": "^1.14.0",
     "eslint": "^6.1.0",
     "eslint-plugin-mocha": "^6.0.0",
+    "eslint-plugin-react-hooks": "^1.6.1",
     "jsdom": "^15.1.1",
     "mocha": "^6.2.0",
     "react-addons-test-utils": "^15.6.2",

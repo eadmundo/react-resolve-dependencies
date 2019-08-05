@@ -42,7 +42,7 @@ export default function resolveDependencies(
       }
 
       useEffect(() => {
-        let hasCancelled = false
+        let hasCancelled = false;
 
         if (!hasCancelled) {
           Promise.all(dependencies(WrappedComponent))
