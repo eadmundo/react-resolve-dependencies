@@ -97,4 +97,38 @@ describe('resolveDependencies', () => {
       expect(mountedComponent.contains(<WrappedComponent />)).to.be.true;
     })
   })
+
+  context('cancelling dependency resolution', () => {
+    it('should not call onDependencyResolution or onDependencyFailure', (done) => {
+      // Promise will never resolve
+      dependencyStub = sinon.stub().returns(new Promise(() => {
+        setTimeout(() => {}, 2000);
+      }));
+
+      const failureSpy = sinon.spy();
+      const successSpy = sinon.spy();
+
+      class ComponentWithResolvingDependencies extends React.Component {
+        static dependencies = [dependencyStub];
+        static onDependencyResolution = successSpy;
+        static onDependencyFailure = failureSpy;
+
+        render() {
+          return null
+        }
+      }
+
+      WrappedComponent = resolveDependencies()(ComponentWithResolvingDependencies)
+      mountedComponent = mount(<WrappedComponent />)
+
+      expect(dependencyStub.calledOnce).to.be.true;
+
+      mountedComponent.unmount();
+
+      expect(failureSpy.calledOnce).to.be.false;
+      expect(successSpy.calledOnce).to.be.false;
+
+      done()
+    })
+  })
 })

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import hoistNonReactStatics from 'hoist-non-react-statics';
+import { makeCancelable } from './makeCancelable';
 
 export default function resolveDependencies(
   LoadingComponent,
@@ -37,23 +38,31 @@ export default function resolveDependencies(
       };
 
       const onDependencyFailure = reason => {
-        setDependenciesFailed(true);
-        setReason(reason);
-        if (WrappedComponent.onDependencyFailure) {
-          WrappedComponent.onDependencyFailure(reason);
+        const { isCanceled } = reason;
+
+        if (!isCanceled) {
+          // If we have cancelled the promise when unmounting the component, don't
+          // attempt to update any state values.
+          setDependenciesFailed(true);
+          setReason(reason);
+          if (WrappedComponent.onDependencyFailure) {
+            WrappedComponent.onDependencyFailure(reason);
+          }
         }
       };
 
       useEffect(() => {
-        let hasCancelled = false;
+        const cancelablePromise = makeCancelable(Promise.all(
+          dependencies(WrappedComponent)
+        ));
 
-        if (!hasCancelled) {
-          Promise.all(dependencies(WrappedComponent))
-            .then(onDependencyResolution)
-            .catch(onDependencyFailure);
-        }
+        cancelablePromise
+          .promise
+          .then(onDependencyResolution)
+          .catch(onDependencyFailure)
+
         return function cleanup() {
-          hasCancelled = true;
+          cancelablePromise.cancel()
         };
       }, []);
 
