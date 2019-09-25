@@ -1,6 +1,6 @@
 {
   "name": "react-resolve-dependencies",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Resolve dependencies before rendering a React component",
   "main": "lib/index.js",
   "scripts": {
@@ -11,24 +11,20 @@
     "test": "mocha --require @babel/register --recursive ./test --require ./test/setup.js"
   },
   "keywords": [],
-  "author": "Edward Stone &lt;edwardjstone@yahoo.com&gt;",
-  "repository": "https://github.com/eadmundo/react-resolve-dependencies",
+  "author": "Edward Stone &lt;ed@autotelic.com&gt;",
+  "repository": "https://github.com/autotelic/react-resolve-dependencies",
   "bugs": {
-    "url": "https://github.com/eadmundo/react-resolve-dependencies/issues"
+    "url": "https://github.com/autotelic/react-resolve-dependencies/issues"
   },
-  "homepage": "https://github.com/eadmundo/react-resolve-dependencies",
+  "homepage": "https://github.com/autotelic/react-resolve-dependencies",
   "license": "MIT",
   "dependencies": {
-    "@babel/runtime": "^7.5.5",
-    "hoist-non-react-statics": "^3.3.0",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6"
+    "hoist-non-react-statics": "^3.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.5.5",
     "@babel/core": "^7.5.5",
     "@babel/plugin-proposal-class-properties": "^7.5.5",
-    "@babel/plugin-transform-runtime": "^7.5.5",
     "@babel/preset-env": "^7.5.5",
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.5.5",
@@ -41,12 +37,18 @@
     "eslint-plugin-react-hooks": "^1.6.1",
     "jsdom": "^15.1.1",
     "mocha": "^6.2.0",
+    "react": "^16.9.0",
     "react-addons-test-utils": "^15.6.2",
+    "react-dom": "^16.9.0",
     "rimraf": "^2.6.3",
     "sinon": "^7.3.2",
     "watch": "^1.0.2"
   },
-  "npmName": "react-resolve-dependencies",
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "npmName": "@autotelic/react-resolve-dependencies",
   "npmFileMap": [
     {
       "basePath": "/lib/",
