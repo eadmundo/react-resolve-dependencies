@@ -1,5 +1,5 @@
 {
-  "name": "react-resolve-dependencies",
+  "name": "@autotelic/react-resolve-dependencies",
   "version": "0.2.1",
   "description": "Resolve dependencies before rendering a React component",
   "main": "lib/index.js",
@@ -48,7 +48,7 @@
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
   },
-  "npmName": "@autotelic/react-resolve-dependencies",
+  "npmName": "react-resolve-dependencies",
   "npmFileMap": [
     {
       "basePath": "/lib/",

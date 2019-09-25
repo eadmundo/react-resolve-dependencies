@@ -4,13 +4,13 @@ A [higher order component](https://medium.com/@franleplant/react-higher-order-co
 
 ## Installation
 
-    $ npm install react-resolve-dependencies
+    $ npm install @autotelic/react-resolve-dependencies
 
 ## Usage
 
 ```javascript
 import React from 'react'
-import resolveDependencies from 'react-resolve-dependencies'
+import resolveDependencies from '@autotelic/react-resolve-dependencies'
 
 function dependency() {
   return Promise.resolve('dependency resolved')
