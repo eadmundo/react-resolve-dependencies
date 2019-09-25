@@ -1,99 +1,83 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import hoistNonReactStatics from 'hoist-non-react-statics';
+import { makeCancelable } from './makeCancelable';
 
-export default function resolveDependencies(LoadingComponent, FailureComponent) {
-
+export default function resolveDependencies(
+  LoadingComponent,
+  FailureComponent,
+) {
   return function wrapWithResolver(WrappedComponent) {
+    const DependenciesResolver = props => {
+      const [dependenciesResolved, setDependenciesResolved] = useState(false);
+      const [dependenciesFailed, setDependenciesFailed] = useState(false);
+      const [reason, setReason] = useState(null);
 
-    class DependenciesResolver extends React.PureComponent {
+      const arrayPropertyIsValid = (component, propertyName) => {
+        return (
+          Array.isArray(component[propertyName]) &&
+          component[propertyName].length > 0
+        );
+      };
 
-      static wrappedComponent = WrappedComponent
+      const componentHasDependencies = component =>
+        arrayPropertyIsValid(component, 'dependencies');
 
-      static defaultProps = {
-        serverRendered: false
-      }
+      const componentDependencies = component =>
+        component.dependencies.map(dependency => dependency(props), this);
 
-      constructor(props, context) {
-        super(props, context);
-        if (!this.isOnServer) {
-          this.state = {
-            dependenciesResolved: this.props.serverRendered,
-            dependenciesFailed: false
-          }
-        }
-        this.onDependencyResolution = this.onDependencyResolution.bind(this);
-        this.onDependencyFailure = this.onDependencyFailure.bind(this);
-      }
+      const dependencies = component =>
+        componentHasDependencies(component)
+          ? componentDependencies(component)
+          : [Promise.resolve('no component dependencies')];
 
-      static arrayPropertyIsValid(component, propertyName) {
-        return Array.isArray(component[propertyName]) && component[propertyName].length > 0;
-      }
-
-      get isOnServer() {
-        return !(typeof window !== 'undefined' && window.document);
-      }
-
-      static componentHasDependencies(component) {
-        return this.arrayPropertyIsValid(component, 'dependencies')
-      }
-
-      static componentDependencies(component) {
-        return component.dependencies.map(dependency => {
-          return dependency()
-        })
-      }
-
-      onDependencyResolution(results=[]) {
-        this.setState({
-          dependenciesResolved: true
-        })
+      const onDependencyResolution = (results = []) => {
+        setDependenciesResolved(true);
         if (WrappedComponent.onDependencyResolution) {
-          WrappedComponent.onDependencyResolution(results)
+          WrappedComponent.onDependencyResolution(results);
         }
-      }
+      };
 
-      onDependencyFailure(reason) {
-        this.setState({
-          dependenciesFailed: true
-        })
-        if (WrappedComponent.onDependencyFailure) {
-          WrappedComponent.onDependencyFailure(reason)
-        }
-      }
+      const onDependencyFailure = reason => {
+        const { isCanceled } = reason;
 
-      static dependencies(component) {
-        return this.componentHasDependencies(component)
-          ? this.componentDependencies(component)
-          : [Promise.resolve('no component dependencies')]
-      }
-
-      componentWillMount() {
-        if (!this.isOnServer && !this.props.serverRendered) {
-          Promise.all(this.constructor.dependencies(WrappedComponent))
-            .then(this.onDependencyResolution)
-            .catch(this.onDependencyFailure)
-        }
-      }
-
-      render() {
-
-        if (!this.isOnServer && !this.state.dependenciesResolved) {
-          if (LoadingComponent && !this.state.dependenciesFailed) {
-            return <LoadingComponent {...this.props} />;
+        if (!isCanceled) {
+          // If we have cancelled the promise when unmounting the component, don't
+          // attempt to update any state values.
+          setDependenciesFailed(true);
+          setReason(reason);
+          if (WrappedComponent.onDependencyFailure) {
+            WrappedComponent.onDependencyFailure(reason);
           }
-          if (this.state.dependenciesFailed) {
-            if (FailureComponent) {
-              return <FailureComponent {...this.props} />;
-            }
-          }
-          return null;
         }
+      };
 
-        return <WrappedComponent {...this.props} />;
+      useEffect(() => {
+        const cancelablePromise = makeCancelable(Promise.all(
+          dependencies(WrappedComponent)
+        ));
+
+        cancelablePromise
+          .promise
+          .then(onDependencyResolution)
+          .catch(onDependencyFailure)
+
+        return function cleanup() {
+          cancelablePromise.cancel()
+        };
+      }, []);
+
+      if (!dependenciesResolved) {
+        if (LoadingComponent && !dependenciesFailed) {
+          return <LoadingComponent {...props} />;
+        }
+        if (dependenciesFailed && FailureComponent) {
+          return <FailureComponent {...props} reason={reason} />;
+        }
+        return null;
       }
+      return <WrappedComponent {...props} />;
+    };
 
-    }
-
-    return DependenciesResolver;
-  }
-
+    return hoistNonReactStatics(DependenciesResolver, WrappedComponent);
+  };
 }

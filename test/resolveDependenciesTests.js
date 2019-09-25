@@ -1,3 +1,4 @@
+
 import { expect } from 'chai';
 import { mount } from 'enzyme';
 import sinon from 'sinon';
@@ -5,11 +6,9 @@ import React from 'react';
 import resolveDependencies from '../src'
 
 class FailureComponent extends React.Component {
-
   render() {
-    return <div>Dependency Failure</div>
+    return <div className="failed">Dependency Failure</div>
   }
-
 }
 
 describe('resolveDependencies', () => {
@@ -21,19 +20,15 @@ describe('resolveDependencies', () => {
   context('no dependencies', () => {
 
     beforeEach(done => {
-
       function onDependencyResolution() {
         done()
       }
 
       class ComponentWithoutDependencies extends React.Component {
-
         static onDependencyResolution = onDependencyResolution
-
         render() {
           return null
         }
-
       }
 
       WrappedComponent = resolveDependencies(null, FailureComponent)(ComponentWithoutDependencies)
@@ -43,42 +38,22 @@ describe('resolveDependencies', () => {
     it('should render the WrappedComponent', () => {
       expect(mountedComponent.contains(<WrappedComponent />)).to.be.true;
     })
-
-    it('should set dependenciesResolved to true', () => {
-      expect(mountedComponent.state('dependenciesResolved')).to.be.true;
-    })
-
-    it('should leave dependenciesFailed as false', () => {
-      expect(mountedComponent.state('dependenciesFailed')).to.be.false;
-    })
-
   })
 
   context('failing dependencies', () => {
-
     beforeEach(done => {
-
       function onDependencyFailure() {
         done()
       }
 
       dependencyStub = sinon.stub().returns(Promise.reject('failed'))
 
-      class ComponentWithFailingDependencies extends React.Component {
+      const ComponentWithFailingDependencies = () => null;
 
-        static dependencies = [
-          dependencyStub
-        ]
+      ComponentWithFailingDependencies.dependencies = [dependencyStub]
+      ComponentWithFailingDependencies.onDependencyFailure = onDependencyFailure
 
-        static onDependencyFailure = onDependencyFailure
-
-        render() {
-          return null
-        }
-
-      }
-
-      WrappedComponent = resolveDependencies(null, FailureComponent)(ComponentWithFailingDependencies)
+      WrappedComponent = resolveDependencies(() => null, FailureComponent)(ComponentWithFailingDependencies)
       mountedComponent = mount(<WrappedComponent />)
     })
 
@@ -87,21 +62,11 @@ describe('resolveDependencies', () => {
     })
 
     it('should render the FailureComponent', () => {
-      expect(mountedComponent.contains(<FailureComponent />)).to.be.true;
+      expect(mountedComponent.update().find('.failed').length === 1);
     })
-
-    it('should set dependenciesFailed to true', () => {
-      expect(mountedComponent.state('dependenciesFailed')).to.be.true;
-    })
-
-    it('should leave dependenciesResolved as false', () => {
-      expect(mountedComponent.state('dependenciesResolved')).to.be.false;
-    })
-
   })
 
   context('resolving dependencies', () => {
-
     beforeEach(done => {
 
       function onDependencyResolution() {
@@ -111,17 +76,13 @@ describe('resolveDependencies', () => {
       dependencyStub = sinon.stub().returns(Promise.resolve('succeeded'))
 
       class ComponentWithResolvingDependencies extends React.Component {
-
         static dependencies = [
           dependencyStub
         ]
-
         static onDependencyResolution = onDependencyResolution
-
         render() {
           return null
         }
-
       }
 
       WrappedComponent = resolveDependencies()(ComponentWithResolvingDependencies)
@@ -135,14 +96,39 @@ describe('resolveDependencies', () => {
     it('should render the WrappedComponent', () => {
       expect(mountedComponent.contains(<WrappedComponent />)).to.be.true;
     })
+  })
 
-    it('should set dependenciesResolved to true', () => {
-      expect(mountedComponent.state('dependenciesResolved')).to.be.true;
+  context('cancelling dependency resolution', () => {
+    it('should not call onDependencyResolution or onDependencyFailure', (done) => {
+      // Promise will never resolve
+      dependencyStub = sinon.stub().returns(new Promise(() => {
+        setTimeout(() => {}, 2000);
+      }));
+
+      const failureSpy = sinon.spy();
+      const successSpy = sinon.spy();
+
+      class ComponentWithResolvingDependencies extends React.Component {
+        static dependencies = [dependencyStub];
+        static onDependencyResolution = successSpy;
+        static onDependencyFailure = failureSpy;
+
+        render() {
+          return null
+        }
+      }
+
+      WrappedComponent = resolveDependencies()(ComponentWithResolvingDependencies)
+      mountedComponent = mount(<WrappedComponent />)
+
+      expect(dependencyStub.calledOnce).to.be.true;
+
+      mountedComponent.unmount();
+
+      expect(failureSpy.calledOnce).to.be.false;
+      expect(successSpy.calledOnce).to.be.false;
+
+      done()
     })
-
-    it('should leave dependenciesFailed as false', () => {
-      expect(mountedComponent.state('dependenciesFailed')).to.be.false;
-    })
-
   })
 })
