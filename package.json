@@ -42,7 +42,7 @@
     "react-addons-test-utils": "^15.6.2",
     "react-dom": "^16.9.0",
     "rimraf": "^3.0.0",
-    "sinon": "^7.3.2",
+    "sinon": "^8.0.2",
     "watch": "^1.0.2"
   },
   "peerDependencies": {
