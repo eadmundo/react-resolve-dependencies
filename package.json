@@ -33,7 +33,7 @@
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.14.0",
     "eslint": "^7.1.0",
-    "eslint-plugin-mocha": "^6.0.0",
+    "eslint-plugin-mocha": "^8.0.0",
     "eslint-plugin-react": "^7.16.0",
     "eslint-plugin-react-hooks": "^4.0.2",
     "jsdom": "^15.1.1",
